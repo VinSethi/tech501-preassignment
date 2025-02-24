@@ -157,3 +157,75 @@ apt-get install nano` - To install nano command.
 
 ### Step 4: Run the localhost in the browser
 ![Screenshot of the new nginx page](image-2.png)
+
+
+## Task: Run Sparta test app in a docker container
+### Step 1: Create a new repo and folder 
+### Step 2: Move the app folder into the new folder
+### Step 3: Create a new Dockerfile in the folder
+![Screenshot of the commands for Dockerfile](image-5.png)
+### Step 4: Build the docker image
+* `docker build -t yourdockerhubusername/my-app:latest .` - this command will build the docker image
+### Step 5: Run the docker container
+* `docker run -d -p 3000:3000 --name my-running-app yourdockerhubusername/my-app:latest`- this command will run the docker container 
+![Screenshot of the app working](<Screenshot 2025-02-24 103309.png>)
+### Step 6: Push the image to docker hub
+* Login into docker account
+* Use this command to push to docker account `docker push yourdockerhubusername/my-app:latest`
+### Step 6: Force docker to pull a fresh image from docker hub
+* First force the image to be removed from local
+* `docker run --pull always -d -p 3000:3000 --name my-running-app yourdockerhubusername/my-app:latest`
+
+## Task: Research Docker compose
+### Why use it?
+* Docker Compose is useful when you need to define and manage multi-container Docker applications. Instead of manually running multiple docker run commands, Compose allows you to define your entire application stack in a simple YAML file (docker-compose.yml). Here’s why you should use Docker Compose:
+  * Easy Configuration and Version Control
+  * Simplifies Multi-Container Management
+  * Consistency Across Environments
+  * Dependency Management
+### How to use it?
+### What to install?
+* You need to install docker compose
+### How to store the compose file?
+* A docker-compose.yml file should be stored in your project directory, typically at the root.
+### Command to manage your application
+* Start the Application (Without Detached Mode) = `docker compose up`
+* Start the Application (In Detached Mode) = `docker compose up -d`
+* The difference between with/without detached node: Detached (-d) -Runs in the background, keeps running even if you close the terminal. Foreground (default)	Shows logs in the terminal, stops when you press CTRL + C.
+* Stop the application: `docker compose down` or if you want to stop without removing the containers: `docker compose stop`
+* Run application in detached mode= `docker compose up -d`
+* Check Services Running with Docker Compose= `docker compose ps`
+* View logs in real time= `docker compose logs -f`
+* View docker compose images= `docker compose images`
+
+## Task: Use Docker compose to run app and database containers
+### Step 1: Pull the docker MongoDB image
+* `docker pull mongo:6.0`
+* Run it as a container `docker run -d \
+  --name my-mongodb \
+  -p 27017:27017 \
+  -v mongo-data:/data/db \
+  -e MONGO_INITDB_ROOT_USERNAME=admin \
+  -e MONGO_INITDB_ROOT_PASSWORD=password \
+  mongo:6.0
+  `
+### Step 2: Create a docker-compose.yml file
+* `touch docker-compose.yml`
+* `nano docker-compose.yml`
+![Screenshot of the docker compose file](image-6.png)
+### Step 3: Start the containers
+* `docker compose up -d`
+### Step 4: SSH into the app container
+* `docker exec -it my-app sh`
+* Create the DB_HOST env variable
+### Step 5: Make sure to keep the app and db in the same network
+* This can be done in the docker compose file by specifying network in both the app and db code
+### Step 6: You can either manually seed the database or automatically
+* Manual:
+  * Go into the app cotainer and run `npm install`
+* ![alt text](image-7.png)
+* ![alt text](image-8.png)
+
+* Automatic:
+   * Go into the compose file and a command `command: sh -c "node seeds/seed.js && npm start"`
+![alt text](image-9.png)
