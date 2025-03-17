@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sparta-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sparta
+  template:
+    metadata:
+      labels:
+        app: sparta
+    spec:
+      containers:
+      - name: sparta-app
+        image: vineetsethi1/my-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_HOST
+          value: "mongodb://mongo:27017/posts"
+        resources:
+          requests:
+            cpu: "250m"  # Request 250 millicores (0.25 CPU)
+          limits:
+            cpu: "500m"  # Limit to 500 millicores (0.5 CPU)
