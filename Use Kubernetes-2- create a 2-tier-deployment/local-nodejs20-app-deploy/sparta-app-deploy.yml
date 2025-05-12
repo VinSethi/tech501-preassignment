@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sparta-app
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: sparta
+  template:
+    metadata:
+      labels:
+        app: sparta
+    spec:
+      containers:
+      - name: sparta-app
+        image: vineetsethi1/my-app:latest
+        ports:
+        - containerPort: 3000
