@@ -1,23 +1,49 @@
 pipeline {
     agent any
-    
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
         DOCKER_IMAGE = 'vineetsethi1/my-app'
         DOCKER_TAG = "${BUILD_NUMBER}"
-        KUBE_CONFIG = credentials('kubeconfig')
+        SSH_CREDENTIALS = 'target-vm'
     }
-    
+
     stages {
+        stage('Checkout Repo') {
+            steps {
+                git credentialsId: 'id_rsa',
+                    url: 'git@github.com:VinSethi/node-sparta-test-app.git',
+                    branch: 'main' // Replace with your actual branch if different
+            }
+        }
+
+        stage('Check Git Repo and Files') {
+            steps {
+                sh '''
+                    echo "✅ Current Directory:"
+                    pwd
+
+                    echo "📁 Listing files in workspace:"
+                    ls -al
+
+                    echo "🔍 Verifying Git remote:"
+                    git remote -v || echo "No Git repo found in current workspace"
+                '''
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
+                script {
+                    env.IMAGE_TAG = "${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
                 sh """
                     docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                     docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                 """
             }
         }
-        
+
         stage('Push to DockerHub') {
             steps {
                 sh """
@@ -27,22 +53,23 @@ pipeline {
                 """
             }
         }
-        
+
         stage('Deploy to Kubernetes') {
             steps {
-                sh """
-                    export KUBECONFIG=\${KUBE_CONFIG}
-                    kubectl apply -f k8s/
-                    kubectl set image deployment/sparta-app sparta-app=${DOCKER_IMAGE}:${DOCKER_TAG}
-                    kubectl rollout status deployment/sparta-app
-                """
+                sshagent([env.SSH_CREDENTIALS]) {
+                    script {
+                        def imageTag = env.IMAGE_TAG
+                        sh('''
+    ssh -o StrictHostKeyChecking=no ubuntu@172.31.58.118 << EOF
+export KUBECONFIG=/home/ubuntu/.kube/config
+echo "Setting image in deployment..."
+kubectl set image deployment/sparta-app sparta-app=${imageTag} --record
+echo "Deployment updated"
+EOF
+''')
+                    }
+                }
             }
-        }
-    }
-    
-    post {
-        always {
-            sh 'docker logout'
         }
     }
 }
